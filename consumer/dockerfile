@@ -1,0 +1,25 @@
+FROM golang:1.23.3-alpine AS build
+
+RUN apk add --no-cache git
+
+WORKDIR /src
+
+# Copy dependency files first
+COPY go.mod go.sum ./
+
+# Download dependencies
+RUN go mod download
+
+# Copy source code
+COPY consumer.go ./
+
+# Build the application
+RUN CGO_ENABLED=0 GOOS=linux go build -o consumer
+
+FROM alpine AS runtime
+
+WORKDIR /app
+
+COPY --from=build /src/consumer ./
+
+CMD ["./consumer"]
